@@ -1,0 +1,77 @@
+package werehouse;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.Socket;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Scanner;
+
+
+
+
+public class Client_Thread implements Runnable{
+	DataInputStream din;
+	static DataOutputStream dout;
+	Scanner input;
+	PreparedStatement st;
+	ResultSet rs;
+	Connection con;
+
+public Client_Thread(Socket connection,Connection con)throws Exception {
+	super();
+	this.con=con;
+	din=new DataInputStream(connection.getInputStream());
+	dout=new DataOutputStream(connection.getOutputStream());
+	input=new Scanner(System.in);
+}
+	
+	public synchronized void run(){
+		while(true){
+		try {
+		//Vuvejdane na dannite ot clienta
+			String price_drop;
+
+				int cliento=din.readInt();
+				int product_ido=din.readInt();
+				int quantityo=din.readInt();
+				int discount;
+		
+		//Proverka za otstupka spored zakupenoto kolichestvo
+				switch(quantityo){
+				case 20:
+					discount=1;
+					price_drop="5%";
+					break;
+				case 40:
+					discount=2;
+					price_drop="10%";
+					break;
+				case 60:
+					discount=3;
+					price_drop="15%";
+					break;
+				case 80:
+					discount=4;
+					price_drop="20%";
+					break;
+				default:
+					discount=0;
+					price_drop="0%";
+				break;
+				}
+					
+				st=con.prepareStatement("insert into `warehouse`.`orders`(`customer_id` ,`product_id` ,`order_quantity`,`discount_id`) values("+cliento+","+product_ido+","+quantityo+","+discount+")");
+				st.executeUpdate();
+					
+				dout.writeUTF("\nYOUR ORDER HAS BEEN RECEIVED!\n\n  ORDERED QUANTITY: "+quantityo+"\n  DISCOUNT: "+price_drop+"\n\nTHANK YOU FOR YOUR PURCHASE!");
+	} catch (Exception e) {
+		System.out.println(e.getMessage());
+	}	
+	finally{
+	}
+		}
+	}
+}	
+
